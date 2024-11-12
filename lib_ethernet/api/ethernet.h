@@ -560,6 +560,43 @@ void mii_ethernet_mac(server ethernet_cfg_if i_cfg[n_cfg], static const unsigned
                       clock rxclk,
                       clock txclk,
                       static const unsigned rx_bufsize_words);
+
+/** 10/100 Mb/s Ethernet MAC component that connects to an RMII interface.
+ *
+ *  This function implements a 10/100 Mb/s Ethernet MAC component connected to
+ *  an MII interface.
+ *  Interaction to the component is via the connected configuration
+ *  and data interfaces.
+ *
+ *  \param i_cfg            Array of client configuration interfaces
+ *  \param n_cfg            The number of configuration clients connected
+ *
+ *  \param i_rx             Array of receive clients
+ *  \param n_rx             The number of receive clients connected
+ *
+ *  \param i_tx             Array of transmit clients
+ *  \param n_tx             The number of transmit clients connected
+ *
+ *  \param p_rxer           MII RX error port
+ *  \param p_rxd            MII RX data port
+ *  \param p_rxdv           MII RX data valid port
+ *  \param p_txen           MII TX enable port
+ *  \param p_txd            MII TX data port
+ *  \param p_timing         Internal timing port - this can be any xCORE port that
+ *                          is not connected to any external device.
+ *  \param rxclk            Clock used for MII receive and transmit timing timing
+ *  \param rx_bufsize_words The number of words to used for a receive buffer.
+                            This should be at least 1500 words.
+ */
+void mii_ethernet_mac(server ethernet_cfg_if i_cfg[n_cfg], static const unsigned n_cfg,
+                      server ethernet_rx_if i_rx[n_rx], static const unsigned n_rx,
+                      server ethernet_tx_if i_tx[n_tx], static const unsigned n_tx,
+                      in port p_rxclk, in port p_rxer, in port p_rxd, in port p_rxdv,
+                      in port p_txclk, out port p_txen, out port p_txd,
+                      port p_timing,
+                      clock rxclk,
+                      clock txclk,
+                      static const unsigned rx_bufsize_words);
 #endif
 
 #endif // __ethernet__h__
