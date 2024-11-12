@@ -564,7 +564,7 @@ void mii_ethernet_mac(server ethernet_cfg_if i_cfg[n_cfg], static const unsigned
 /** 10/100 Mb/s Ethernet MAC component that connects to an RMII interface.
  *
  *  This function implements a 10/100 Mb/s Ethernet MAC component connected to
- *  an MII interface.
+ *  an RMII interface.
  *  Interaction to the component is via the connected configuration
  *  and data interfaces.
  *
@@ -577,11 +577,12 @@ void mii_ethernet_mac(server ethernet_cfg_if i_cfg[n_cfg], static const unsigned
  *  \param i_tx             Array of transmit clients
  *  \param n_tx             The number of transmit clients connected
  *
- *  \param p_rxer           MII RX error port
- *  \param p_rxd            MII RX data port
- *  \param p_rxdv           MII RX data valid port
- *  \param p_txen           MII TX enable port
- *  \param p_txd            MII TX data port
+ *  \param p_phy_clk        RMII 50 MHz clock
+ *  \param p_rxer           RMII RX error port
+ *  \param p_rxd            RMII RX data port
+ *  \param p_rxdv           RMII RX data valid port
+ *  \param p_txen           RMII TX enable port
+ *  \param p_txd            RMII TX data port
  *  \param p_timing         Internal timing port - this can be any xCORE port that
  *                          is not connected to any external device.
  *  \param rxclk            Clock used for MII receive and transmit timing timing
