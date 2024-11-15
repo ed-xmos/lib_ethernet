@@ -10,7 +10,7 @@
 #include "smi.h"
 #include "rmii_master.h"
 
-#define RMII    1
+#define RMII    0
 
 #if RMII
 out buffered port:32    p_eth_txd    = on tile[1]: XS1_PORT_4A; // J10 - 02 03 08, CODEC_RST_N
@@ -78,6 +78,8 @@ void init_eth_clock_and_mode_pins(void){
     outport(p_eth_rxd, rxd_mode_pin);
     printf("Set mode pins for RMII\n");
     configure_clock_ref(clk_clkin, (2 / 2)); // 100 / 2 = 50 MHz
+    delay_microseconds(300);
+    p_eth_rxd :> int _; // Hi z
     printf("Clock init'd 50MHz\n");
 #else
     configure_clock_ref(clk_clkin, (4 / 2)); // 100 / 4 = 25 MHz
@@ -87,8 +89,7 @@ void init_eth_clock_and_mode_pins(void){
     set_port_mode_clock(p_clkin);
     start_clock(clk_clkin);
 
-    delay_microseconds(300);
-    p_eth_rxd :> int _; // Hi z
+
 
 
 }
@@ -196,8 +197,10 @@ void lan8710a_phy_driver(client interface smi_if smi,
 
 
   printf("PHY configured\n");
-  while(1);
 
+#if RMII
+  while(1);
+#endif
   while (1) {
     select {
     case tmr when timerafter(t) :> t:
