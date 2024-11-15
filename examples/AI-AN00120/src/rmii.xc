@@ -247,6 +247,7 @@ static inline void tx_crumb(uint32_t word, out buffered port:32 p_txd){
 {
 
 unsafe{
+
   unsigned time;
   register const unsigned poly = 0xEDB88320;
   unsigned int crc = 0;

@@ -90,8 +90,8 @@ void smi_setup(client interface smi_if i_smi){
     int phy_address = 0x00;
     while (smi_phy_is_powered_down(i_smi, phy_address));
     printf("PHY powered up\n");
-    smi_configure(i_smi, phy_address, LINK_100_MBPS_FULL_DUPLEX, SMI_DISABLE_AUTONEG);
-    printf("PHY configured\n");
+    // smi_configure(i_smi, phy_address, LINK_100_MBPS_FULL_DUPLEX, SMI_DISABLE_AUTONEG);
+    // printf("PHY configured\n");
 }
 
 int main()

@@ -10,7 +10,7 @@
 #include "smi.h"
 #include "rmii_master.h"
 
-#define RMII    0
+#define RMII    1
 
 #if RMII
 out buffered port:32    p_eth_txd    = on tile[1]: XS1_PORT_4A; // J10 - 02 03 08, CODEC_RST_N
