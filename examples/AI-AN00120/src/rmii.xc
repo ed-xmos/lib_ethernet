@@ -2,6 +2,7 @@
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 #include "mii_master.h"
 #include <xs1.h>
+#include <xclib.h>
 #include <print.h>
 #include <stdlib.h>
 #include <syscall.h>
@@ -33,8 +34,8 @@
 // Timing tuning constants
 #define PAD_DELAY_RECEIVE    0
 #define PAD_DELAY_TRANSMIT   0
-#define CLK_DELAY_RECEIVE    0
-#define CLK_DELAY_TRANSMIT   7  // Note: used to be 2 (improved simulator?)
+#define CLK_DELAY_RECEIVE    3 // works 0..6
+#define CLK_DELAY_TRANSMIT   0
 // After-init delay (used at the end of mii_init)
 #define PHY_INIT_DELAY 10000000
 
@@ -52,37 +53,42 @@
 
 
 
-void rmii_master_init(in port p_rxclk, in buffered port:32 p_rxd, in port p_rxdv,
+void rmii_master_init(port p_rxclk, in buffered port:32 p_rxd, in port p_rxdv,
                      in port p_txclk, out port p_txen, out buffered port:32 p_txd,
-                     clock phy_clk, in buffered port:1 p_rxer)
+                     clock phy_clk, in buffered port:1 p_rxer, clock clk_rx)
 {
-  // set_port_use_on(p_rxclk);
   // p_rxclk :> int x;
-  // set_port_use_on(p_rxd);
-  // set_port_use_on(p_rxdv);
+  set_port_use_on(p_rxd);
+  set_port_use_on(p_rxdv);
 
-  // set_pad_delay(p_rxclk, PAD_DELAY_RECEIVE);
+  set_port_strobed(p_rxd);
+  set_port_slave(p_rxd);
 
-  // set_port_strobed(p_rxd);
-  // set_port_slave(p_rxd);
+  set_clock_on(clk_rx);
+  set_clock_src(clk_rx, p_txclk); // Note tx clock!!
+  set_clock_ready_src(clk_rx, p_rxdv);
+  set_port_clock(p_rxd, clk_rx);
+  set_port_clock(p_rxdv, clk_rx);
 
-  // configure_in_port_strobed_slave(p_rxer, p_rxdv, clk_rx);
+  // Output Rx clock to check it's chooching
+  // set_port_use_on(p_rxclk);
+  // set_port_clock(p_rxclk, clk_rx);
+  // set_port_mode_clock(p_rxclk);
 
-  // set_clock_on(clk_rx);
-  // set_clock_src(clk_rx, p_rxclk);
-  // set_clock_ready_src(clk_rx, p_rxdv);
-  // set_port_clock(p_rxd, clk_rx);
-  // set_port_clock(p_rxdv, clk_rx);
+  // Do timing stuff
+  set_clock_rise_delay(clk_rx, CLK_DELAY_RECEIVE);
+  set_clock_fall_delay(clk_rx, CLK_DELAY_RECEIVE);
+  set_port_sample_delay(p_rxd);
+  set_port_sample_delay(p_rxdv);
 
-  // set_clock_rise_delay(clk_rx, CLK_DELAY_RECEIVE);
 
-  // start_clock(clk_rx);
+  start_clock(clk_rx);
 
-  // clearbuf(p_rxd);
+  clearbuf(p_rxd);
 
   /////////////// TX //////////////
 
-  set_port_use_on(p_txclk);
+  // set_port_use_on(p_txclk);
   set_port_use_on(p_txd);
   set_port_use_on(p_txen);
   //  set_port_use_on(p_txer);
@@ -123,12 +129,11 @@ unsafe void rmii_master_rx_pins(unsigned *buff,
                                in buffered port:1 p_mii_rxer,
                                unsigned &crc, int &num_rx_bytes)
 {
-  timer tmr;
+    timer tmr;
 
-  /* Make sure we do not start in the middle of a packet */
-  p_mii_rxdv when pinseq(0) :> int lo;
+    /* Make sure we do not start in the middle of a packet */
+    p_mii_rxdv when pinseq(0) :> int lo;
 
-  while (1) {
 
     /* Discount the CRC word */
     num_rx_bytes = -4;
@@ -141,29 +146,51 @@ unsafe void rmii_master_rx_pins(unsigned *buff,
     asm("setsr 0x2");
 
     /* Wait for the start of the packet and timestamp it */
-    unsigned sfd_preamble;
-    #pragma xta endpoint "mii_rx_sof"
-    p_mii_rxd when pinseq(0xD) :> sfd_preamble;
+    unsigned preamble[3]; //3 because we will lose some due to crd_dv early
 
-    if (((sfd_preamble >> 24) & 0xFF) != 0xD5) {
+    // First 4 bytes of preamble
+    uint32_t word, word2;
+    p_mii_rxd :> word;
+    p_mii_rxd :> word2;
+    {word2, word} = unzip((uint64_t)word| ((uint64_t)word2 << 32), 1); // Lower crumb
+    preamble[0] = word;
+
+    // Find out how many bits late the data was - we know TXD0 is 1 for the preamble
+    unsigned crs_dv_early = clz(bitrev(word));
+
+    // Second 4 bytes of preamble
+    p_mii_rxd :> word;
+    p_mii_rxd :> word2;
+    {word2, word} = unzip((uint64_t)word| ((uint64_t)word2 << 32), 1); // Lower crumb
+
+    preamble[1] = word;
+
+    word = partin(p_mii_rxd, crs_dv_early << 1);
+    word2 = 0;
+    {word2, word} = unzip((uint64_t)word| ((uint64_t)word2 << 32), 1); // Lower crumb
+    preamble[2] = word;
+
+    // CUrrently discard the preamble
+
+    if (((preamble[1] >> 24) & 0xFF) != 0xD5) {
       /* Corrupt the CRC so that the packet is discarded */
-      crc = ~crc;
+      // crc = ~crc;
     }
 
     /* Timestamp the start of packet and record it in the packet structure */
-    #pragma xta endpoint "mii_rx_after_preamble"
     unsigned time;
     tmr :> time;
     // buf->timestamp = time;
 
     unsigned end_of_frame = 0;
-    unsigned word;
 
     do {
      select
        {
-#pragma xta endpoint "mii_rx_word"
        case p_mii_rxd :> word:
+         p_mii_rxd :> word2;
+         {word2, word} = unzip((uint64_t)word| ((uint64_t)word2 << 32), 1); // Lower crumb
+
          crc32(crc, word, poly);
 
          *buff = word;
@@ -174,6 +201,7 @@ unsafe void rmii_master_rx_pins(unsigned *buff,
 
        case p_mii_rxdv when pinseq(0) :> int:
          end_of_frame = 1;
+         // printf("EOF\n");
          break;
       }
     } while (!end_of_frame);
@@ -192,11 +220,14 @@ unsafe void rmii_master_rx_pins(unsigned *buff,
     /* Note: we don't store the last word since it contains the CRC and
      * we don't need it from this point on. */
 
-#pragma xta label "mii_rx_begin"
-    unsigned taillen = endin(p_mii_rxd);
+    unsigned taillen = endin(p_mii_rxd) * 2;
+    printf("Tail: %u\n", taillen);
 
     unsigned tail;
-    p_mii_rxd :> tail;
+    p_mii_rxd :> word;
+    p_mii_rxd :> word2;
+    {word2, word} = unzip((uint64_t)word| ((uint64_t)word2 << 32), 1); // Lower crumb
+    tail = word;
 
     if (taillen & ~0x7) {
       #pragma xta label "mii_rx_no_tail"
@@ -217,9 +248,14 @@ unsafe void rmii_master_rx_pins(unsigned *buff,
       { tail, crc } = mac(crc, mask, tail, crc);
       crc32(crc, tail, poly);
     }
-  }
 
-  return ;
+
+    printf("crs_dv_early: %u, preamble [0,1,2]: 0x%x 0x%x 0x%x\n", crs_dv_early >> 1, preamble[0], preamble[1], preamble[2]);
+
+    //TMP as we are not consuming the buffer properly
+    clearbuf(p_mii_rxd);
+
+  return;
 }
 
 
@@ -232,6 +268,13 @@ static inline void tx_crumb(uint32_t word, out buffered port:32 p_txd){
     p_txd <: zipped & 0xffffffff;
     p_txd <: zipped >> 32;
 }
+
+static inline void tx_crumb_8(uint32_t word, out buffered port:32 p_txd){
+    uint64_t zipped = zip(0, word, 1); // Lower crumb, port bits 0, 1
+    // uint64_t zipped = zip(word, 0, 1); // Upper crumb, port bits 2,
+    partout(p_txd, 16, zipped & 0x0000ffff);
+}
+
 
 
 #undef crc32
@@ -255,7 +298,7 @@ unsafe{
   int i=0;
   int word_count = num_bytes >> 2;
   int tail_byte_count = num_bytes & 3;
-  printf("word_count: %d tail_byte_count: %d\n", word_count, tail_byte_count);
+  // printf("word_count: %d tail_byte_count: %d\n", word_count, tail_byte_count);
  
   // Check that we are out of the inter-frame gap
   asm volatile ("in %0, res[%1]"
@@ -300,14 +343,14 @@ unsafe{
         break;
 #pragma fallthrough
       case 3:
-        partout(p_mii_txd, 8, word);
+        tx_crumb_8(word, p_mii_txd);
         word = crc8shr(crc, word, poly);
 #pragma fallthrough
       case 2:
-        partout(p_mii_txd, 8, word);
+        tx_crumb_8(word, p_mii_txd);
         word = crc8shr(crc, word, poly);
       case 1:
-        partout(p_mii_txd, 8, word);
+        tx_crumb_8(word, p_mii_txd);
         crc8shr(crc, word, poly);
         break;
       }

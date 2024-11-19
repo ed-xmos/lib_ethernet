@@ -9,9 +9,9 @@
 
 #ifdef __XC__
 
-void rmii_master_init(in port p_rxclk, in buffered port:32 p_rxd, in port p_rxdv,
+void rmii_master_init(port p_rxclk, in buffered port:32 p_rxd, in port p_rxdv,
                      in port p_txclk, out port p_txen, out buffered port:32 p_txd,
-                     clock phy_clk, in buffered port:1 p_rxer);
+                     clock phy_clk, in buffered port:1 p_rxer, clock clk_rx);
 
 unsafe void rmii_master_rx_pins(unsigned *buff,
                                in port p_mii_rxdv,

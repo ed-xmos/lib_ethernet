@@ -57,10 +57,10 @@ uint8_t ethernet_frame[] = {
     0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0,
     0xbb, 0xbb, 0xbb, 0xbb, 0xbb, 0xbb, 0xbb, 0xbb,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0xed
+    0x00, 0x00, 0x00, 0x00, 0x00, 0xed, 0xff
 };
 
-unsigned frame_aligned[60 / 4] = {0};
+unsigned frame_aligned[60 / 4 + 1] = {0};
 
 #define outport(c, x)   asm ("out res[%0], %1" :: "r" (c), "r" (x))
 
@@ -97,7 +97,7 @@ void init_eth_clock_and_mode_pins(void){
 void app(client interface mii_if mii)
 {
 #if RMII
-  rmii_master_init(p_eth_rxclk, p_eth_rxd, p_eth_rxdv, p_eth_txclk, p_eth_txen, p_eth_txd, clk_clkin, p_eth_rxerr);
+  rmii_master_init(p_eth_rxclk, p_eth_rxd, p_eth_rxdv, p_clkin, p_eth_txen, p_eth_txd, clk_clkin, p_eth_rxerr, eth_rxclk);
 #else
   mii_info_t mii_info = mii.init();
 #endif
@@ -108,15 +108,26 @@ void app(client interface mii_if mii)
   memcpy(frame_aligned, ethernet_frame, sizeof(ethernet_frame));
 
 #if RMII
-    while(1){
-        unsafe{
-            hwtimer_t ifg_tmr;
-            unsigned ifg_time = 96;
-            rmii_transmit_packet(frame_aligned, sizeof(ethernet_frame), p_eth_txd, ifg_tmr, ifg_time);
+    par{
+        while(1){
+            unsafe{
+                hwtimer_t ifg_tmr;
+                unsigned ifg_time = 96;
+                rmii_transmit_packet(frame_aligned, sizeof(ethernet_frame), p_eth_txd, ifg_tmr, ifg_time);
+            }
+            delay_seconds(1);
         }
-        delay_seconds(1);
+        while(1){
+            unsigned crc;
+            int num_rx_bytes;
+            unsigned buff[1580 / 4];
+            unsafe{
+                rmii_master_rx_pins(buff, p_eth_rxdv, p_eth_rxd, p_eth_rxerr, crc, num_rx_bytes);
+            }
+            uint8_t *ptr = (uint8_t *)buff;
+            printf("XCOREAI Received frame: %d bytes source MAC: %x %x %x %x %x %x ED: %x, extra: %x, %x\n", num_rx_bytes, ptr[6], ptr[7], ptr[8], ptr[9], ptr[10], ptr[11], ptr[14], ptr[60], ptr[61] );
+        }
     }
-
 #else
 
   while (1) {

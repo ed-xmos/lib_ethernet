@@ -40,10 +40,10 @@ uint8_t ethernet_frame[] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0xed
+    0x00, 0x00, 0x00, 0x00, 0x00, 0xed, 0x99,
 };
 
-int frame_aligned[60 / 4] = {0};
+int frame_aligned[60 / 4 + 1] = {0};
 
 
 void app(client interface mii_if mii)
@@ -69,7 +69,7 @@ void app(client interface mii_if mii)
         }
         mii.release_packet(data);
       break;
-    case 1 => tmr when timerafter(send_trigger + XS1_TIMER_HZ) :> send_trigger:
+    case tmr when timerafter(send_trigger + XS1_TIMER_HZ/4) :> send_trigger:
         int * unsafe data = NULL;
 
         unsafe{data = (int * unsafe)frame_aligned;}
