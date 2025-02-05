@@ -48,14 +48,15 @@ static out buffered port:32 * unsafe enable_buffered_out_port(unsigned *port_poi
                   port ?p_rxd_1){
     unsafe {
         in buffered port:32 * unsafe rx_data_0 = &p_rxd_0;
-        in buffered port:32 * unsafe rx_data_1 = &p_rxd_1;
+        in buffered port:32 * unsafe rx_data_1 = NULL;
+        if(!isnull(p_rxd_1)) rx_data_1 = &p_rxd_1;
         // Extract width and optionally which 4b pins to use
         unsigned rx_port_width = ((unsigned)(*rx_data_0) >> 16) & 0xff;
 
         // Extract pointers to ports with correct port qualifiers and setup data pins
         switch(rx_port_width){
           case 4:
-            rx_data_0 = enable_buffered_in_port((unsigned*)(rx_data_0), 32);
+            rx_data_0 = enable_buffered_in_port((unsigned*)rx_data_0, 32);
             rmii_master_init_rx_4b(p_clk, rx_data_0, p_rxdv, rxclk);
             break;
           case 1:
@@ -81,12 +82,13 @@ static out buffered port:32 * unsafe enable_buffered_out_port(unsigned *port_poi
                   port ?p_txd_1){
     unsafe {
         out buffered port:32 * unsafe tx_data_0 = &p_txd_0;
-        out buffered port:32 * unsafe tx_data_1 = &p_txd_1;
-        unsigned tx_port_width = ((unsigned)(tx_data_0) >> 16) & 0xff;
+        out buffered port:32 * unsafe tx_data_1 = NULL;
+        if(!isnull(p_txd_1)) tx_data_1 = &p_txd_1;
+        unsigned tx_port_width = ((unsigned)(*tx_data_0) >> 16) & 0xff;
 
         switch(tx_port_width){
         case 4:
-            tx_data_0 = enable_buffered_out_port((unsigned*)(tx_data_0), 32);
+            tx_data_0 = enable_buffered_out_port((unsigned*)tx_data_0, 32);
             rmii_master_init_tx_4b(p_clk, tx_data_0, p_txen, txclk);
             break;
         case 1:
@@ -98,6 +100,7 @@ static out buffered port:32 * unsafe enable_buffered_out_port(unsigned *port_poi
             fail("Invald port width for RMII Tx");
             break;
         }
+
 
         return {tx_port_width, tx_data_0, tx_data_1};
 
