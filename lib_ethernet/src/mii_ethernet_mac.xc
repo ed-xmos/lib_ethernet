@@ -1,4 +1,4 @@
-// Copyright 2015-2021 XMOS LIMITED.
+// Copyright 2015-2025 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 #include "ethernet.h"
 #include "default_ethernet_conf.h"
@@ -160,7 +160,7 @@ static void mii_ethernet_aux(client mii_if i_mii,
         memcpy(r_mac_address, mac_address, sizeof mac_address);
         break;
 
-      case i_cfg[int i].set_macaddr(size_t ifnum, uint8_t r_mac_address[MACADDR_NUM_BYTES]):
+      case i_cfg[int i].set_macaddr(size_t ifnum, const uint8_t r_mac_address[MACADDR_NUM_BYTES]):
         memcpy(mac_address, r_mac_address, sizeof r_mac_address);
         break;
 
@@ -221,6 +221,16 @@ static void mii_ethernet_aux(client mii_if i_mii,
         fail("Shaper not supported in standard MII Ethernet MAC");
         break;
 
+      case i_cfg[int i].set_egress_qav_idle_slope_bps(size_t ifnum, unsigned bits_per_second): {
+        fail("Shaper not supported in standard MII Ethernet MAC");
+        break;
+      }
+
+      case i_cfg[int i].set_egress_qav_credit_limit(size_t ifnum, int payload_limit_bytes): {
+        fail("Shaper not supported in standard MII Ethernet MAC");
+        break;
+      }
+
       case i_cfg[int i].set_ingress_timestamp_latency(size_t ifnum, ethernet_speed_t speed, unsigned value): {
         fail("Timestamp correction not supported in standard MII Ethernet MAC");
         break;
@@ -256,6 +266,11 @@ static void mii_ethernet_aux(client mii_if i_mii,
         client_state_t &client_state = client_state[client_num];
         client_state.status_update_state = STATUS_UPDATE_IGNORING;
         break;
+
+      case i_cfg[int i].exit(void): {
+        // Do nothing - exit not supported on this MAC
+        break;
+      }
 
       case i_tx[int i]._complete_send_packet(char data[n], unsigned n,
                                              int request_timestamp,
