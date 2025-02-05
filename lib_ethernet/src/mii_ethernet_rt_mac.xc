@@ -223,7 +223,7 @@ unsafe void mii_ethernet_server(mii_mempool_t rx_mem,
                                 chanend c_macaddr_filter,
                                 volatile ethernet_port_state_t * unsafe p_port_state,
                                 volatile int * unsafe running_flag_ptr,
-                                chanend c_rx_pins_exit,
+                                chanend c_rx_pins_exit[],
                                 phy_100mb_t phy_type)
 {
   uint8_t mac_address[MACADDR_NUM_BYTES] = {0};
@@ -457,9 +457,12 @@ unsafe void mii_ethernet_server(mii_mempool_t rx_mem,
       break;
 
     case i_cfg[int i].exit(void): {
-      if(phy_type == ETH_MAC_IF_RMII){
+      if(phy_type == ETH_MAC_IF_RMII || phy_type == ETH_MAC_IF_RMII_DUAL){
           *running_flag_ptr = 0;
-          rx_end_send_sig(c_rx_pins_exit);
+          rx_end_send_sig(c_rx_pins_exit[0]);
+          if(phy_type == ETH_MAC_IF_RMII_DUAL){
+            rx_end_send_sig(c_rx_pins_exit[1]);
+          }
       }
       // else do nothing - not supported on MII currently
       break;
@@ -645,7 +648,7 @@ void mii_ethernet_rt_mac(server ethernet_cfg_if i_cfg[n_cfg], static const unsig
     // Exit flag and chanend
     int rmii_ethernet_rt_mac_running = 1;
     int * unsafe running_flag_ptr = &rmii_ethernet_rt_mac_running;
-    chan c_rx_pins_exit;
+    chan c_rx_pins_exit[1];
 
 
     chan c_conf;
