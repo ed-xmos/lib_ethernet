@@ -454,11 +454,6 @@ void rmii_ethernet_rt_mac_dual(SERVER_INTERFACE(ethernet_cfg_if, i_cfg[n_cfg]), 
 
         ethernet_port_state_t * unsafe p_port_state = (ethernet_port_state_t * unsafe)port_state;
 
-        // Exit flag and chanend
-        int rmii_ethernet_rt_mac_running = 1;
-        int * unsafe running_flag_ptr = &rmii_ethernet_rt_mac_running;
-        chan c_rx_pins_exit[2];
-
         chan c_conf;
 
         // Exit flag and chanend
@@ -470,58 +465,34 @@ void rmii_ethernet_rt_mac_dual(SERVER_INTERFACE(ethernet_cfg_if, i_cfg[n_cfg]), 
             {
                 if(rx_port_width_0 == 4)
                 {
-                    rmii_master_rx_pins_4b(rx_mem,
+                    rmii_master_rx_pins_4b(rx_mem[0],
                                          (mii_packet_queue_t)&incoming_packets,
-                                         p_rx_rdptr,
+                                         p_rx_rdptr[0],
                                          p_rxdv_0,
                                          rx_data_0_0,
                                          rx_pin_map_0,
                                          running_flag_ptr,
                                          c_rx_pins_exit[0]);
-                    rmii_master_rx_pins_4b(rx_mem[0],
-                                          (mii_packet_queue_t)(&incoming_packets[0]),
-                                          (mii_rdptr_t)&rx_rdptr[0],
-                                          p_rxdv_0,
-                                          rx_data_0_0,
-                                          rx_port_4b_pins_0,
-                                          running_flag_ptr,
-                                          c_rx_pins_exit[0]);
                 } else {
-                    rmii_master_rx_pins_1b(rx_mem,
+                    rmii_master_rx_pins_1b(rx_mem[0],
                                          (mii_packet_queue_t)&incoming_packets,
-                                         p_rx_rdptr,
+                                         p_rx_rdptr[0],
                                          p_rxdv_0,
                                          rx_data_0_0,
                                          rx_data_0_1,
                                          running_flag_ptr,
                                          c_rx_pins_exit[0]);
-                    rmii_master_rx_pins_1b(rx_mem[0],
-                                          (mii_packet_queue_t)(&incoming_packets[0]),
-                                          (mii_rdptr_t)&rx_rdptr[0],
-                                          p_rxdv_0,
-                                          rx_data_0_0,
-                                          rx_data_0_1,
-                                          running_flag_ptr,
-                                          c_rx_pins_exit[0]);
                 }
             }
             {
                 if(rx_port_width_1 == 4)
                 {
-                    rmii_master_rx_pins_4b(rx_mem,
-                                         (mii_packet_queue_t)&incoming_packets,
-                                         p_rx_rdptr,
-                                         p_rxdv_1,
-                                         rx_data_1_0,
-                                         rx_pin_map_1,
-                                         running_flag_ptr,
-                                         c_rx_pins_exit[1]);
                     rmii_master_rx_pins_4b(rx_mem[1],
                                           (mii_packet_queue_t)(&incoming_packets[1]),
                                           (mii_rdptr_t)&rx_rdptr[1],
                                           p_rxdv_1,
                                           rx_data_1_0,
-                                          rx_port_4b_pins_1,
+                                          rx_pin_map_1,
                                           running_flag_ptr,
                                           c_rx_pins_exit[1]);
                 } else {
