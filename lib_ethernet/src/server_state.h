@@ -10,7 +10,6 @@
 typedef enum phy_100mb_t {
     ETH_MAC_IF_MII = 0,
     ETH_MAC_IF_RMII,
-    ETH_MAC_IF_RMII_DUAL
 } phy_100mb_t;
 
 // Data structure to keep track of server MAC port data

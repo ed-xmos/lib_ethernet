@@ -228,28 +228,6 @@ unsafe static inline void handle_ts_queue(mii_ts_queue_t ts_queue,
   }
 }
 
-<<<<<<< HEAD
-unsafe void mii_ethernet_server(mii_mempool_t rx_mem,
-                                mii_packet_queue_t rx_packets_lp,
-                                mii_packet_queue_t rx_packets_hp,
-                                unsigned * unsafe rx_rdptr,
-                                mii_mempool_t tx_mem_lp,
-                                mii_mempool_t tx_mem_hp,
-                                mii_packet_queue_t tx_packets_lp,
-                                mii_packet_queue_t tx_packets_hp,
-                                mii_ts_queue_t ts_queue_lp,
-                                server ethernet_cfg_if i_cfg[n_cfg], static const unsigned n_cfg,
-                                server ethernet_rx_if i_rx_lp[n_rx_lp], static const unsigned n_rx_lp,
-                                server ethernet_tx_if i_tx_lp[n_tx_lp], static const unsigned n_tx_lp,
-                                streaming chanend ? c_rx_hp,
-                                streaming chanend ? c_tx_hp,
-                                chanend c_macaddr_filter,
-                                volatile ethernet_port_state_t * unsafe p_port_state,
-                                volatile int * unsafe running_flag_ptr,
-                                chanend c_rx_pins_exit[],
-                                phy_100mb_t phy_type)
-=======
-
 unsafe void mii_ethernet_server(mii_mempool_t * unsafe rx_mem,
                                packet_queue_info_t * unsafe rx_packets_lp,
                                packet_queue_info_t * unsafe rx_packets_hp,
@@ -271,7 +249,6 @@ unsafe void mii_ethernet_server(mii_mempool_t * unsafe rx_mem,
                                phy_100mb_t phy_type,
                                static const unsigned num_mac_ports
                                )
->>>>>>> 50230da7ce8814b96ea3056af415ed734d18c8d7
 {
   uint8_t mac_address[MACADDR_NUM_BYTES] = {0};
   rx_client_state_t rx_client_state_lp[n_rx_lp];
@@ -489,11 +466,7 @@ unsafe void mii_ethernet_server(mii_mempool_t * unsafe rx_mem,
       if (speed < 0 || speed >= NUM_ETHERNET_SPEEDS) {
         fail("Invalid Ethernet speed, must be a valid ethernet_speed_t enum value");
       }
-<<<<<<< HEAD
-      p_port_state->ingress_ts_latency[speed] = value / 10; // div by 10 to get to timer ticks from nanonseconds 
-=======
-      p_port_state[ifnum].ingress_ts_latency[speed] = value / 10;
->>>>>>> 50230da7ce8814b96ea3056af415ed734d18c8d7
+      p_port_state[ifnum].ingress_ts_latency[speed] = value / 10; // div by 10 to get to timer ticks from nanonseconds 
       break;
     }
 
@@ -540,17 +513,11 @@ unsafe void mii_ethernet_server(mii_mempool_t * unsafe rx_mem,
       break;
 
     case i_cfg[int i].exit(void): {
-      if(phy_type == ETH_MAC_IF_RMII || phy_type == ETH_MAC_IF_RMII_DUAL){
+      if(phy_type == ETH_MAC_IF_RMII){
           *running_flag_ptr = 0;
-<<<<<<< HEAD
-          rx_end_send_sig(c_rx_pins_exit[0]);
-          if(phy_type == ETH_MAC_IF_RMII_DUAL){
-            rx_end_send_sig(c_rx_pins_exit[1]);
-=======
           for(int i=0; i<num_mac_ports; i++)
           {
             rx_end_send_sig(c_rx_pins_exit[i]);
->>>>>>> 50230da7ce8814b96ea3056af415ed734d18c8d7
           }
       }
       // else do nothing - not supported on MII currently
