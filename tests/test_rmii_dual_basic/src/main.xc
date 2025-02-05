@@ -60,18 +60,22 @@ int main()
 
   par {
       
-      unsafe{rmii_ethernet_rt_mac_dual(i_cfg, NUM_CFG_IF,
+      rmii_ethernet_rt_mac_dual(i_cfg, NUM_CFG_IF,
                                       i_rx_lp, NUM_RX_LP_IF,
                                       i_tx_lp, NUM_TX_LP_IF,
                                       NULL, NULL,
                                       p_eth_clk,
-                                      &p_eth_rxd, p_eth_rxdv,
-                                      p_eth_txen, &p_eth_txd,
+                                      p_eth_rxd_0, p_eth_rxd_1, RX_PINS,
+                                      p_eth_rxdv,
+                                      p_eth_txen,
+                                      p_eth_txd_0, p_eth_txd_1, TX_PINS,
                                       eth_rxclk, eth_txclk,
-                                      &p_eth_rxd_2, p_eth_rxdv_2,
-                                      p_eth_txen_2, &p_eth_txd_2,
-                                      eth_rxclk_2, eth_txclk_2,
-                                      4000, 4000, ETHERNET_ENABLE_SHAPER);}
+                                      p_eth_rxd_0_phy2, p_eth_rxd_1_phy2, RX_PINS,
+                                      p_eth_rxdv_phy2,
+                                      p_eth_txen_phy2,
+                                      p_eth_txd_0_phy2, p_eth_txd_1_phy2, TX_PINS,
+                                      eth_rxclk_phy2, eth_txclk_phy2,
+                                      4000, 4000, ETHERNET_ENABLE_SHAPER);
 
       loopback(i_cfg[0], i_rx_lp[0], i_tx_lp[0]);
 

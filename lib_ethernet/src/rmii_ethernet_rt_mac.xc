@@ -45,7 +45,7 @@ static out buffered port:32 * unsafe enable_buffered_out_port(unsigned *port_poi
                   in_port_t p_rxdv,
                   clock rxclk,
                   port p_rxd_0,
-                  port p_rxd_1){
+                  port ?p_rxd_1){
     unsafe {
         in buffered port:32 * unsafe rx_data_0 = &p_rxd_0;
         in buffered port:32 * unsafe rx_data_1 = &p_rxd_1;
@@ -78,7 +78,7 @@ static out buffered port:32 * unsafe enable_buffered_out_port(unsigned *port_poi
                   out_port_t p_txen,
                   clock txclk,
                   port p_txd_0,
-                  port p_txd_1){
+                  port ?p_txd_1){
     unsafe {
         out buffered port:32 * unsafe tx_data_0 = &p_txd_0;
         out buffered port:32 * unsafe tx_data_1 = &p_txd_1;
